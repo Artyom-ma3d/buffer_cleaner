@@ -1,0 +1,8 @@
+#ifndef RESOURCE_H
+#define RESOURCE_H
+
+#define IDI_ICON_ACTIVE 101
+#define IDI_ICON_PAUSED 102
+#define IDI_ICON_FLASH  103
+
+#endif // RESOURCE_H

@@ -1,0 +1,5 @@
+#include "resource.h"
+
+IDI_ICON_ACTIVE ICON "active.ico"
+IDI_ICON_PAUSED ICON "paused.ico"
+IDI_ICON_FLASH  ICON "flash.ico"
