@@ -1,3 +1,27 @@
+# 🛡️ Buffer Cleaner (Single-Use Clipboard Custodian / Одноразовый буфер обмена)
+
+**Buffer Cleaner** is an ultra-lightweight Windows utility (C++ / WinAPI) designed to automatically wipe sensitive data (passwords, tokens, personal info) from your clipboard. / **Buffer Cleaner** — это ультралегкая утилита для Windows, которая автоматически уничтожает конфиденциальные данные из буфера обмена.
+
+## 🔥 Key Features / Ключевые функции
+* **Single-Use Paste / Одноразовая вставка:** Wipes data 300ms after pasting via keyboard or mouse. / Стирает данные через 300 мс после вставки.
+* **Self-Destruct Timer / Таймер самоликвидации:** Purges unused data after 1 minute with a notification. / Очищает неиспользованные данные через 1 минуту.
+* **Global Pause / Глобальная пауза:** Toggle protection via tray icon or hotkey **`Ctrl + Alt + P`**. / Переключение защиты через трей или клавиши **`Ctrl + Alt + P`**.
+* **Instance Guard & Autostart / Защита и автозапуск:** Uses a Mutex to prevent duplicates and supports Windows startup. / Защита от дубликатов через мьютекс и настройка автозапуска.
+
+## 🚀 Quick Start / Быстрый старт
+1. **Launch:** Run `buffer_cleaner.exe` to quietly minimize to the system tray. / Запустите `buffer_cleaner.exe` для работы в фоне.
+2. **Usage:** Copy and paste sensitive text once; the tray icon will flash upon deletion. / Скопируйте и вставьте текст один раз — иконка мигнет при стирании.
+3. **Control:** Use the tray context menu or **`Ctrl + Alt + P`** to manage the app. / Используйте меню трея или **`Ctrl + Alt + P`** для управления.
+
+## 🛠️ Build from Source / Сборка проекта
+```bash
+windres resource.rc -o resource.o
+g++ buffer_cleaner.cpp resource.o -o buffer_cleaner.exe -mwindows -luser32 -lshell32 -ladvapi32
+```
+
+
+
+***************************************************************
 
 🛡️ Buffer Cleaner (Одноразовый буфер обмена)
 
