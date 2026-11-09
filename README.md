@@ -23,5 +23,6 @@ Buffer Cleaner — это ультралегкая утилита для Windows
 Компиляция через g++ (MinGW):
 
 bash
+
 windres resource.rc -o resource.o
 g++ buffer_cleaner.cpp resource.o -o buffer_cleaner.exe -mwindows -luser32 -lshell32 -ladvapi32
