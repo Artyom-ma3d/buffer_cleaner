@@ -35,14 +35,7 @@ HWND hMainHwnd = NULL;
 
 bool isInternalChange = false; 
 bool hasContentToClear = false;
-
-// Храним номер последнего изменения буфера Windows
-DWORD lastSequenceNumber = 0;
-
-// Проверка системного языка пользователя
-bool IsRussianSystem() {
-    return (PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_RUSSIAN);
-}
+bool wasRightLinkClicked = false; 
 
 bool IsAutoStartEnabled() {
     HKEY hKey;
@@ -75,14 +68,15 @@ void SetAutoStart(bool enable) {
 void UpdateTrayIcon(HICON hIcon, const wchar_t* tooltip) {
     nid.hIcon = hIcon;
     wcscpy_s(nid.szTip, tooltip);
-    nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+    nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP; // Обычное обновление без баблов
     Shell_NotifyIconW(NIM_MODIFY, &nid);
 }
 
+// Функция отправки системного пуш-уведомления
 void ShowNotification(const wchar_t* title, const wchar_t* message) {
     NOTIFYICONDATAW nidNotify = nid;
     nidNotify.uFlags = NIF_INFO;
-    nidNotify.dwInfoFlags = NIIF_INFO;
+    nidNotify.dwInfoFlags = NIIF_INFO; // Значок "Информация" на уведомлении
     wcscpy_s(nidNotify.szInfoTitle, title);
     wcscpy_s(nidNotify.szInfo, message);
     Shell_NotifyIconW(NIM_MODIFY, &nidNotify);
@@ -94,23 +88,23 @@ void ClearClipboard() {
         EmptyClipboard();
         CloseClipboard();
     }
-    lastSequenceNumber = GetClipboardSequenceNumber(); // Обновляем наш счетчик после очистки
     isInternalChange = false;
 }
 
 void TriggerFlashEffect() {
-    UpdateTrayIcon(hIconFlash, IsRussianSystem() ? L"Буфер очищен!" : L"Clipboard cleared!");
+    UpdateTrayIcon(hIconFlash, L"Буфер очищен!");
     SetTimer(hMainHwnd, TIMER_BLINK, 400, NULL);
 }
 
 DWORD WINAPI ClearBufferAsyncThread(LPVOID lpParam) {
-    Sleep(300); // Ваша комфортная задержка 300мс
+    Sleep(300); // Ваша новая комфортная задержка 300мс
     PostMessageW(hMainHwnd, WM_ASYNC_CLEAR, 0, 0);
     return 0;
 }
 
 void StartAsyncClear() {
     hasContentToClear = false;
+    wasRightLinkClicked = false;
     KillTimer(hMainHwnd, TIMER_SELF_DESTRUCT); 
     CreateThread(NULL, 0, ClearBufferAsyncThread, NULL, 0, NULL);
 }
@@ -120,13 +114,12 @@ void TogglePause(HWND hwnd) {
     if (isPaused) {
         KillTimer(hwnd, TIMER_SELF_DESTRUCT);
         hasContentToClear = false;
-        UpdateTrayIcon(hIconPaused, IsRussianSystem() ? L"Автоочистка: ПАУЗА" : L"Auto-clear: PAUSED");
+        UpdateTrayIcon(hIconPaused, L"Автоочистка: ПАУЗА");
     } else {
-        UpdateTrayIcon(hIconActive, IsRussianSystem() ? L"Автоочистка буфера активна" : L"Clipboard auto-clear active");
+        UpdateTrayIcon(hIconActive, L"Автоочистка буфера активна");
     }
 }
 
-// 1. ХУК КЛАВИАТУРЫ: Перехват Ctrl+V и Shift+Insert
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode >= 0 && !isPaused && hasContentToClear) {
         KBDLLHOOKSTRUCT* kbd = (KBDLLHOOKSTRUCT*)lParam;
@@ -142,15 +135,19 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
 }
 
-// 2. ХУК МЫШИ: Отслеживает клик ЛКМ и проверяет, изменился ли счетчик буфера Windows (работает ВЕЗДЕ!)
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode >= 0 && !isPaused && hasContentToClear) {
-        // Ловим момент, когда пользователь отпускает ЛКМ (выбрал "Вставить" в кастомном меню)
-        if (wParam == WM_LBUTTONUP) {
-            // Проверяем, изменился ли глобальный счетчик буфера обмена Windows.
-            // Если он изменился — значит, браузер или VS Code прочитали текст из буфера!
-            if (GetClipboardSequenceNumber() != lastSequenceNumber && !isInternalChange) {
-                StartAsyncClear();
+        if (wParam == WM_LBUTTONDOWN) {
+            HWND menuHwnd = FindWindowW(L"#32768", NULL);
+            if (menuHwnd != NULL) {
+                MSLLHOOKSTRUCT* mouse = (MSLLHOOKSTRUCT*)lParam;
+                RECT rect;
+                if (GetWindowRect(menuHwnd, &rect)) {
+                    if (mouse->pt.x >= rect.left && mouse->pt.x <= rect.right &&
+                        mouse->pt.y >= rect.top && mouse->pt.y <= rect.bottom) {
+                        StartAsyncClear();
+                    }
+                }
             }
         }
     }
@@ -162,7 +159,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         case WM_CREATE:
             AddClipboardFormatListener(hwnd);
             RegisterHotKey(hwnd, HOTKEY_PAUSE_ID, MOD_CONTROL | MOD_ALT, 'P');
-            lastSequenceNumber = GetClipboardSequenceNumber();
             break;
 
         case WM_CLIPBOARDUPDATE:
@@ -174,7 +170,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 
                 if (format != 0) {
                     hasContentToClear = true; 
-                    lastSequenceNumber = GetClipboardSequenceNumber(); // Запоминаем шаг копирования
                     SetTimer(hwnd, TIMER_SELF_DESTRUCT, SELF_DESTRUCT_TIMEOUT, NULL);
                 }
             }
@@ -197,21 +192,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 if (hasContentToClear && !isPaused) {
                     ClearClipboard();
                     TriggerFlashEffect();
-                    
-                    if (IsRussianSystem()) {
-                        ShowNotification(L"Безопасность буфера", L"Данные автоматически удалены по истечении времени.");
-                    } else {
-                        ShowNotification(L"Clipboard Security", L"Data has been automatically cleared due to timeout.");
-                    }
+                    // Выводим уведомление системы
+                    ShowNotification(L"Безопасность буфера", L"Данные автоматически удалены по истечении времени.");
                 }
             }
             else if (wParam == TIMER_BLINK) {
                 KillTimer(hwnd, TIMER_BLINK);
-                if (isPaused) {
-                    UpdateTrayIcon(hIconPaused, IsRussianSystem() ? L"Автоочистка: ПАУЗА" : L"Auto-clear: PAUSED");
-                } else {
-                    UpdateTrayIcon(hIconActive, IsRussianSystem() ? L"Автоочистка буфера активна" : L"Clipboard auto-clear active");
-                }
+                UpdateTrayIcon(isPaused ? hIconPaused : hIconActive, isPaused ? L"Автоочистка: ПАУЗА" : L"Автоочистка буфера активна");
             }
             break;
 
@@ -225,18 +212,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
                 HMENU hMenu = CreatePopupMenu();
                 UINT pauseFlags = MF_STRING | (isPaused ? MF_CHECKED : MF_UNCHECKED);
-                
-                if (IsRussianSystem()) {
-                    AppendMenuW(hMenu, pauseFlags, ID_TRAY_PAUSE, L"Пауза (Ctrl+Alt+P)");
-                    AppendMenuW(hMenu, MF_STRING | (IsAutoStartEnabled() ? MF_CHECKED : MF_UNCHECKED), ID_TRAY_AUTOSTART, L"Запускать вместе с Windows");
-                    AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-                    AppendMenuW(hMenu, MF_STRING, ID_TRAY_EXIT, L"Выход");
-                } else {
-                    AppendMenuW(hMenu, pauseFlags, ID_TRAY_PAUSE, L"Pause (Ctrl+Alt+P)");
-                    AppendMenuW(hMenu, MF_STRING | (IsAutoStartEnabled() ? MF_CHECKED : MF_UNCHECKED), ID_TRAY_AUTOSTART, L"Start with Windows");
-                    AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
-                    AppendMenuW(hMenu, MF_STRING, ID_TRAY_EXIT, L"Exit");
-                }
+                AppendMenuW(hMenu, pauseFlags, ID_TRAY_PAUSE, L"Пауза (Ctrl+Alt+P)");
+
+                UINT autoStartFlags = MF_STRING | (IsAutoStartEnabled() ? MF_CHECKED : MF_UNCHECKED);
+                AppendMenuW(hMenu, autoStartFlags, ID_TRAY_AUTOSTART, L"Запускать вместе с Windows");
+
+                AppendMenuW(hMenu, MF_SEPARATOR, 0, NULL);
+                AppendMenuW(hMenu, MF_STRING, ID_TRAY_EXIT, L"Выход");
 
                 SetForegroundWindow(hwnd);
                 TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, curPoint.x, curPoint.y, 0, hwnd, NULL);
@@ -270,37 +252,43 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
-default:
-return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+
+        default:
+            return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+    }
+    return 0;
 }
-return 0;
-}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-hMutex = CreateMutexW(NULL, TRUE, MUTEX_NAME);
-if (hMutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS) {
-if (hMutex) CloseHandle(hMutex);
-return 0;
-}
-hIconActive = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_ICON_ACTIVE));
-hIconPaused = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_ICON_PAUSED));
-hIconFlash  = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_ICON_FLASH));
-// Квадратные скобки на месте!
-const wchar_t CLASS_NAME[] = L"ClipboardCleanerTrayClass";
-WNDCLASSW wc = {};
-wc.lpfnWndProc = WindowProc;
-wc.hInstance = hInstance;
-wc.lpszClassName = CLASS_NAME;
-RegisterClassW(&wc);
-hMainHwnd = CreateWindowExW(0, CLASS_NAME, L"Buffer Cleaner", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
-ZeroMemory(&nid, sizeof(nid));
-nid.cbSize = sizeof(NOTIFYICONDATAW);
-nid.hWnd = hMainHwnd;
-nid.uID = ID_TRAY_ICON;
-nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-nid.uCallbackMessage = WM_TRAYICON;
-nid.hIcon = hIconActive;
-wcscpy_s(nid.szTip, IsRussianSystem() ? L"Автоочистка буфера активна" : L"Clipboard auto-clear active");
-Shell_NotifyIconW(NIM_ADD, &nid);
+    hMutex = CreateMutexW(NULL, TRUE, MUTEX_NAME);
+    if (hMutex == NULL || GetLastError() == ERROR_ALREADY_EXISTS) {
+        if (hMutex) CloseHandle(hMutex);
+        return 0; 
+    }
+
+    hIconActive = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_ICON_ACTIVE));
+    hIconPaused = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_ICON_PAUSED));
+    hIconFlash  = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_ICON_FLASH));
+
+    const wchar_t CLASS_NAME[] = L"ClipboardCleanerTrayClass";
+    WNDCLASSW wc = {};
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+    RegisterClassW(&wc);
+
+    hMainHwnd = CreateWindowExW(0, CLASS_NAME, L"Buffer Cleaner", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+
+    ZeroMemory(&nid, sizeof(nid));
+    nid.cbSize = sizeof(NOTIFYICONDATAW);
+    nid.hWnd = hMainHwnd;
+    nid.uID = ID_TRAY_ICON;
+    nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+    nid.uCallbackMessage = WM_TRAYICON;
+    nid.hIcon = hIconActive;
+    wcscpy_s(nid.szTip, L"Автоочистка буфера активна");
+
+    Shell_NotifyIconW(NIM_ADD, &nid);
 hKeyboardHook = SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardProc, hInstance, 0);
 hMouseHook = SetWindowsHookExW(WH_MOUSE_LL, MouseProc, hInstance, 0);
 MSG msg = {};
