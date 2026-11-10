@@ -7,6 +7,11 @@
 * **Self-Destruct Timer / Таймер самоликвидации:** Purges unused data after 1 minute with a notification. / Очищает неиспользованные данные через 1 минуту.
 * **Global Pause / Глобальная пауза:** Toggle protection via tray icon or hotkey **`Ctrl + Alt + P`**. / Переключение защиты через трей или клавиши **`Ctrl + Alt + P`**.
 * **Instance Guard & Autostart / Защита и автозапуск:** Uses a Mutex to prevent duplicates and supports Windows startup. / Защита от дубликатов через мьютекс и настройка автозапуска.
+<p align="center">
+  <img src="pics/active_status.png" alt="Active Status" width="280"/>
+  <img src="pics/tray_menu.png" alt="Tray Menu" width="280"/>
+  <img src="pics/paused_status.png" alt="Paused Status" width="280"/>
+</p>
 
 ## 🚀 Quick Start / Быстрый старт
 1. **Launch:** Run `buffer_cleaner.exe` to quietly minimize to the system tray. / Запустите `buffer_cleaner.exe` для работы в фоне.
