@@ -9,9 +9,9 @@
 * **Instance Guard & Autostart / Защита и автозапуск:** Uses a Mutex to prevent duplicates and supports Windows startup. / Защита от дубликатов через мьютекс и настройка автозапуска.
 * **Full-Spectrum Clipboard Sanitizer** Supports all clipboard formats: text, images, screenshots, and copied files (.pdf, .docx, .exe, etc.). / Поддерживает любые форматы данных: текст, изображения, скриншоты и скопированные файлы.
 <p align="center">
-  <img src="pics/active_status.png" alt="Active Status" width="280"/>
-  <img src="pics/tray_menu.png" alt="Tray Menu" width="280"/>
-  <img src="pics/paused_status.png" alt="Paused Status" width="280"/>
+  <img src="pics/active_status.png" alt="Active Status" width="300"/>
+  <img src="pics/tray_menu.png" alt="Tray Menu" width="300"/>
+  <img src="pics/paused_status.png" alt="Paused Status" width="300"/>
 </p>
 
 ## 🚀 Quick Start / Быстрый старт
