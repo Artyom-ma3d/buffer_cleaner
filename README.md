@@ -17,7 +17,7 @@
 ## 🚀 Quick Start / Быстрый старт
 1. **Launch:** Run `buffer_cleaner.exe` to quietly minimize to the system tray. / Запустите `buffer_cleaner.exe` для работы в фоне.
 2. **Usage:** Copy and paste sensitive text once; the tray icon will flash upon deletion. / Скопируйте и вставьте текст один раз — иконка мигнет при стирании.
-3. **Control:** Use the tray context menu or **`Ctrl + Alt + P`** to manage the app. / Используйте меню трея или **`Ctrl + Alt + P`** для управления.
+3. **Control:** Use the tray context menu or **`Ctrl + Alt + P`** to manage the app or Click LMB on icon in tray to Pause/Activate. / Используйте меню трея или **`Ctrl + Alt + P`** для управления или клик ЛКМ по иконке в треи для паузы/активации.
 
 ## 🛠️ Build from Source / Сборка проекта
 ```bash
