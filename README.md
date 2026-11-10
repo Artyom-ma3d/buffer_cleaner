@@ -26,8 +26,10 @@ g++ buffer_cleaner.cpp resource.o -o buffer_cleaner.exe -mwindows -luser32 -lshe
 ```
 
 
-
+<br/><br/><br/>
 ***************************************************************
+<br/><br/><br/>
+
 
 ## 🛡️ Buffer Cleaner (Одноразовый буфер обмена)
 
