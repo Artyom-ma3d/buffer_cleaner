@@ -2,6 +2,9 @@
 
 [![Download Latest Release](https://shields.io)](https://github.com)
 
+> 📥 **Скачать готовую программу (.exe)** можно на странице [последнего релиза](https://github.com) (установка не требуется).
+
+
 
 **Buffer Cleaner** is an ultra-lightweight Windows utility (C++ / WinAPI) designed to automatically wipe sensitive data (passwords, tokens, personal info) from your clipboard. / **Buffer Cleaner** — это ультралегкая утилита для Windows, которая автоматически уничтожает конфиденциальные данные из буфера обмена.
 
