@@ -1,7 +1,7 @@
 # 🛡️ Buffer Cleaner (Single-Use Clipboard Custodian / Одноразовый буфер обмена)
 
 > [!TIP]
-> 📥 **Скачать готовую программу (`buffer_cleaner.exe`)** можно на странице [Releases (Релизы)](https://github.com).
+> 📥 **Скачать готовую программу (`buffer_cleaner.exe`)** можно на странице [Releases (Релизы)](../../releases).
 
 
 
