@@ -1,8 +1,7 @@
 # 🛡️ Buffer Cleaner (Single-Use Clipboard Custodian / Одноразовый буфер обмена)
 
-[![Download Latest Release](https://shields.io)](https://github.com)
-
-> 📥 **Скачать готовую программу (.exe)** можно на странице [последнего релиза](https://github.com) (установка не требуется).
+> [!TIP]
+> 📥 **Скачать готовую программу (`buffer_cleaner.exe`)** можно на странице [Releases (Релизы)](https://github.com).
 
 
 
